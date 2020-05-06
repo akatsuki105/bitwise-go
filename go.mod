@@ -1,4 +1,4 @@
-module bitwise-go
+module bitwise
 
 go 1.13
 

@@ -6,4 +6,4 @@ endif
 
 .PHONY: build
 build:
-	go build -o bitwise-go$(EXE_EXT) ./cmd/main.go
+	go build -o bitwise$(EXE_EXT) ./cmd/main.go
