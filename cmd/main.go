@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 const (
@@ -41,7 +43,6 @@ func useTUI() {
 }
 
 func useCLI(target string) {
-
 	var i int64
 
 	switch {
@@ -89,15 +90,15 @@ func useCLI(target string) {
 	for index, char := range binTmp {
 		bin += string(char)
 		if (padding+index)%4 == 3 && index+1 != len(binTmp) {
-			bin += "_"
+			bin += " "
 		}
 	}
 
-	fmt.Printf("bin[2]  : %s\n", bin)
+	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("bin[2]  :"), color.CyanString(bin))
 	oct := strconv.FormatInt(i, 8)
-	fmt.Printf("oct[8]  : %s\n", oct)
+	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("oct[8]  :"), color.CyanString(oct))
 	dec := strconv.FormatInt(i, 10)
-	fmt.Printf("dec[10] : %s\n", dec)
+	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("dec[10] :"), color.CyanString(dec))
 	hex := strconv.FormatInt(i, 16)
-	fmt.Printf("hex[16] : %s\n", hex)
+	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("hex[16] :"), color.CyanString(hex))
 }
