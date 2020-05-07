@@ -30,7 +30,7 @@ func useTUI() {
 	state := TUIState{
 		mode:   mode32Bit,
 		cursor: [2]int{0, 31},
-		bits:   *newBitArray(),
+		bits:   *newBitArray(31),
 		dec:    0,
 		oct:    "0",
 		hex:    "0",
@@ -60,7 +60,6 @@ func useTUI() {
 	for {
 		e := <-uiEvents
 		switch e.ID {
-
 		case "q", "<C-c>":
 			return
 
@@ -84,6 +83,7 @@ func useTUI() {
 				if state.cursor[1] > 31 {
 					state.cursor[1] = 0
 				}
+				state.bits.update(int64(state.dec), state.cursor[1])
 				p1.Text = getP1Text(&state)
 			}
 			ui.Render(p0, p1)
@@ -95,6 +95,7 @@ func useTUI() {
 				if state.cursor[1] < 0 {
 					state.cursor[1] = 31
 				}
+				state.bits.update(int64(state.dec), state.cursor[1])
 				p1.Text = getP1Text(&state)
 			}
 			ui.Render(p0, p1)
@@ -112,7 +113,7 @@ func useTUI() {
 					state.oct = strconv.FormatInt(dec, 8)
 					state.dec = int(dec)
 					state.hex = strconv.FormatInt(dec, 16)
-					state.bits.update(dec)
+					state.bits.update(dec, state.cursor[1])
 					p0.Text = getP0Text(&state)
 					p1.Text = getP1Text(&state)
 				}
@@ -132,7 +133,7 @@ func useTUI() {
 					state.oct = strconv.FormatInt(dec, 8)
 					state.dec = int(dec)
 					state.hex = strconv.FormatInt(dec, 16)
-					state.bits.update(dec)
+					state.bits.update(dec, state.cursor[1])
 					p0.Text = getP0Text(&state)
 					p1.Text = getP1Text(&state)
 				}

@@ -1,15 +1,18 @@
 package main
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 type bitArray struct {
 	buf [32]byte
 	str string
 }
 
-func newBitArray() *bitArray {
+func newBitArray(cursor int) *bitArray {
 	b := &bitArray{}
-	b.update(0)
+	b.update(0, cursor)
 	return b
 }
 
@@ -23,7 +26,7 @@ func (b *bitArray) decimal() int64 {
 	return decimal
 }
 
-func (b *bitArray) update(decimal int64) {
+func (b *bitArray) update(decimal int64, cursor int) {
 	bin := strconv.FormatInt(decimal, 2)
 	for i := len(bin); i < 32; i++ {
 		bin = "0" + bin
@@ -39,7 +42,11 @@ func (b *bitArray) update(decimal int64) {
 
 	result := ""
 	for i := 0; i < 32; i++ {
-		result += strconv.Itoa(int(b.buf[31-i]))
+		if 31-i == cursor {
+			result += fmt.Sprintf("[%d](fg:blue,mod:bold)", b.buf[31-i])
+		} else {
+			result += strconv.Itoa(int(b.buf[31-i]))
+		}
 
 		if i == 31 {
 			break
