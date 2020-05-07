@@ -18,6 +18,22 @@ const (
 	ExitCodeError
 )
 
+const (
+	mode32Bit = iota
+	modeBinary
+)
+
+const (
+	BinaryScale = "    " + "[31 - 24](fg:cyan)" + "           " + "[23 - 16](fg:cyan)" + "           " + "[15 -  8](fg:cyan)" + "           " + "[ 7 -  0](fg:cyan)"
+)
+
+type TUIState struct {
+	mode          int
+	cursor        [2]int
+	dec           int
+	bin, oct, hex string
+}
+
 func main() {
 	os.Exit(Run())
 }
@@ -42,11 +58,14 @@ func Run() int {
 }
 
 func useTUI() {
-	const (
-		mode32Bit = iota
-		modeBinary
-	)
-	mode := mode32Bit
+	state := TUIState{
+		mode:   mode32Bit,
+		cursor: [2]int{0, 31},
+		dec:    0,
+		bin:    dec2BitArray(0),
+		oct:    "0",
+		hex:    "0",
+	}
 
 	if err := ui.Init(); err != nil {
 		log.Fatalf("failed to initialize termui: %v", err)
@@ -54,15 +73,22 @@ func useTUI() {
 	defer ui.Close()
 
 	p0 := widgets.NewParagraph()
-	p0.Title = "32bit"
-	p0.Text = "xxxx xxxx"
-	p0.SetRect(0, 0, 60, 5)
+	p0.Title = "Number"
+	p0.PaddingLeft = 1
+	header := "[Decimal:](fg:green)            [Hexdecimal:](fg:green)            [Octal:](fg:green)            "
+	p0.Text = header + "\n\n"
+	p0.SetRect(0, 0, 73, 5)
 	p0.BorderStyle.Fg = ui.ColorBlue
 
 	p1 := widgets.NewParagraph()
 	p1.Title = "Binary"
-	p1.Text = "Simple colored text\nwith label. It [can be](fg:red) multilined with \\n or [break automatically](fg:red,fg:bold)"
-	p1.SetRect(0, 5, 60, 10)
+	p1.PaddingLeft = 1
+	{
+		header := state.bin
+		footer := fmt.Sprintf("bit %d", state.cursor[1])
+		p1.Text = header + "\n" + BinaryScale + "\n" + footer
+	}
+	p1.SetRect(0, 5, 73, 10)
 
 	ui.Render(p0, p1)
 
@@ -70,18 +96,46 @@ func useTUI() {
 	for {
 		e := <-uiEvents
 		switch e.ID {
+
 		case "q", "<C-c>":
 			return
+
 		case "<Tab>":
-			switch mode {
+			switch state.mode {
 			case mode32Bit:
-				mode = modeBinary
+				state.mode = modeBinary
 				p0.BorderStyle.Fg = ui.ColorWhite
 				p1.BorderStyle.Fg = ui.ColorBlue
 			case modeBinary:
-				mode = mode32Bit
+				state.mode = mode32Bit
 				p0.BorderStyle.Fg = ui.ColorBlue
 				p1.BorderStyle.Fg = ui.ColorWhite
+			}
+			ui.Render(p0, p1)
+
+		case "<Left>":
+			switch state.mode {
+			case modeBinary:
+				state.cursor[1]++
+				if state.cursor[1] > 31 {
+					state.cursor[1] = 0
+				}
+				header := state.bin
+				footer := fmt.Sprintf("bit %d", state.cursor[1])
+				p1.Text = header + "\n" + BinaryScale + "\n" + footer
+			}
+			ui.Render(p0, p1)
+
+		case "<Right>":
+			switch state.mode {
+			case modeBinary:
+				state.cursor[1]--
+				if state.cursor[1] < 0 {
+					state.cursor[1] = 31
+				}
+				header := state.bin
+				footer := fmt.Sprintf("bit %d", state.cursor[1])
+				p1.Text = header + "\n" + BinaryScale + "\n" + footer
 			}
 			ui.Render(p0, p1)
 		}
@@ -89,7 +143,7 @@ func useTUI() {
 }
 
 func useCLI(target string) {
-	var i int64
+	var decimal int64
 
 	switch {
 	case strings.HasPrefix(target, "0x"):
@@ -98,7 +152,7 @@ func useCLI(target string) {
 			fmt.Fprintf(os.Stderr, "Invalid hex value.")
 			return
 		}
-		i = tmp
+		decimal = tmp
 	case strings.HasPrefix(target, "0b"):
 		target = strings.Replace(target, "_", "", -1)
 		tmp, err := strconv.ParseInt(target[2:], 2, 64)
@@ -106,24 +160,32 @@ func useCLI(target string) {
 			fmt.Fprintf(os.Stderr, "Invalid binary value.")
 			return
 		}
-		i = tmp
+		decimal = tmp
 	case strings.HasPrefix(target, "0"):
 		tmp, err := strconv.ParseInt(target[1:], 8, 64)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Invalid octal value.")
 			return
 		}
-		i = tmp
+		decimal = tmp
 	default:
 		tmp, err := strconv.ParseInt(target, 10, 64)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Invalid decimal value.")
 			return
 		}
-		i = tmp
+		decimal = tmp
 	}
 
-	binTmp := strconv.FormatInt(i, 2)
+	bin, oct, dec, hex := toString(decimal)
+	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("bin[2]  :"), color.CyanString(bin))
+	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("oct[8]  :"), color.CyanString(oct))
+	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("dec[10] :"), color.CyanString(dec))
+	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("hex[16] :"), color.CyanString(hex))
+}
+
+func toString(decimal int64) (bin, oct, dec, hex string) {
+	binTmp := strconv.FormatInt(decimal, 2)
 	var padding int
 	if len(binTmp)%4 == 0 {
 		padding = 0
@@ -131,7 +193,7 @@ func useCLI(target string) {
 		padding = 4 - (len(binTmp) % 4)
 	}
 
-	bin := ""
+	bin = ""
 	bin += strings.Repeat("0", padding)
 	for index, char := range binTmp {
 		bin += string(char)
@@ -140,11 +202,30 @@ func useCLI(target string) {
 		}
 	}
 
-	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("bin[2]  :"), color.CyanString(bin))
-	oct := strconv.FormatInt(i, 8)
-	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("oct[8]  :"), color.CyanString(oct))
-	dec := strconv.FormatInt(i, 10)
-	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("dec[10] :"), color.CyanString(dec))
-	hex := strconv.FormatInt(i, 16)
-	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("hex[16] :"), color.CyanString(hex))
+	oct = strconv.FormatInt(decimal, 8)
+	dec = strconv.FormatInt(decimal, 10)
+	hex = strconv.FormatInt(decimal, 16)
+	return bin, oct, dec, hex
+}
+
+func dec2BitArray(decimal int64) string {
+	bin := strconv.FormatInt(decimal, 2)
+	for i := len(bin); i <= 32; i++ {
+		bin = "0" + bin
+	}
+
+	result := ""
+	for i := 0; i < 32; i++ {
+		result += string(bin[i])
+
+		if i == 31 {
+			break
+		}
+		result += " "
+
+		if i > 0 && i%8 == 7 {
+			result += "| "
+		}
+	}
+	return result
 }
