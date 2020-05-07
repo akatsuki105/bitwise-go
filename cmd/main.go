@@ -3,11 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/fatih/color"
+	ui "github.com/gizak/termui/v3"
+	"github.com/gizak/termui/v3/widgets"
 )
 
 const (
@@ -39,7 +42,50 @@ func Run() int {
 }
 
 func useTUI() {
-	fmt.Fprintf(os.Stderr, "Error: Not implemented\n")
+	const (
+		mode32Bit = iota
+		modeBinary
+	)
+	mode := mode32Bit
+
+	if err := ui.Init(); err != nil {
+		log.Fatalf("failed to initialize termui: %v", err)
+	}
+	defer ui.Close()
+
+	p0 := widgets.NewParagraph()
+	p0.Title = "32bit"
+	p0.Text = "xxxx xxxx"
+	p0.SetRect(0, 0, 60, 5)
+	p0.BorderStyle.Fg = ui.ColorBlue
+
+	p1 := widgets.NewParagraph()
+	p1.Title = "Binary"
+	p1.Text = "Simple colored text\nwith label. It [can be](fg:red) multilined with \\n or [break automatically](fg:red,fg:bold)"
+	p1.SetRect(0, 5, 60, 10)
+
+	ui.Render(p0, p1)
+
+	uiEvents := ui.PollEvents()
+	for {
+		e := <-uiEvents
+		switch e.ID {
+		case "q", "<C-c>":
+			return
+		case "<Tab>":
+			switch mode {
+			case mode32Bit:
+				mode = modeBinary
+				p0.BorderStyle.Fg = ui.ColorWhite
+				p1.BorderStyle.Fg = ui.ColorBlue
+			case modeBinary:
+				mode = mode32Bit
+				p0.BorderStyle.Fg = ui.ColorBlue
+				p1.BorderStyle.Fg = ui.ColorWhite
+			}
+			ui.Render(p0, p1)
+		}
+	}
 }
 
 func useCLI(target string) {
