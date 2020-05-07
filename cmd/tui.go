@@ -45,7 +45,7 @@ func useTUI() {
 	p0.Title = "Number"
 	p0.PaddingLeft = 1
 	p0.Text = getP0Text(&state)
-	p0.SetRect(0, 0, 73, 5)
+	p0.SetRect(0, 0, 64, 5)
 	p0.BorderStyle.Fg = ui.ColorBlue
 
 	p1 := widgets.NewParagraph()
@@ -143,8 +143,17 @@ func useTUI() {
 }
 
 func getP0Text(state *TUIState) string {
-	header := "[Decimal:](fg:green)            [Hexdecimal:](fg:green)            [Octal:](fg:green)            "
-	footer := fmt.Sprintf("%d                    %s                    %s", state.dec, state.hex, state.oct)
+	header := "[Decimal:](fg:green)              [Hexdecimal:](fg:green)            [Octal:](fg:green)            "
+	footer := fmt.Sprintf("%d", state.dec)
+	length := len(footer)
+	for i := 0; i < 22-length; i++ {
+		footer += " "
+	}
+	footer += state.hex
+	for i := 0; i < 23-len(state.hex); i++ {
+		footer += " "
+	}
+	footer += state.oct
 	text := header + "\n\n" + footer
 	return text
 }
