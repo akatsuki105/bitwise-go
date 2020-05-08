@@ -2,44 +2,39 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
 	"github.com/fatih/color"
 )
 
-func useCLI(target string) {
+func useCLI(target string) error {
 	var decimal int64
 
 	switch {
 	case strings.HasPrefix(target, "0x"):
 		tmp, err := strconv.ParseInt(target[2:], 16, 64)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Invalid hex value.")
-			return
+			return fmt.Errorf("parse error: invalid hexdecimal value")
 		}
 		decimal = tmp
 	case strings.HasPrefix(target, "0b"):
 		target = strings.Replace(target, "_", "", -1)
 		tmp, err := strconv.ParseInt(target[2:], 2, 64)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Invalid binary value.")
-			return
+			return fmt.Errorf("parse error: invalid binary value")
 		}
 		decimal = tmp
 	case strings.HasPrefix(target, "0"):
 		tmp, err := strconv.ParseInt(target[1:], 8, 64)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Invalid octal value.")
-			return
+			return fmt.Errorf("parse error: invalid octal value")
 		}
 		decimal = tmp
 	default:
 		tmp, err := strconv.ParseInt(target, 10, 64)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Invalid decimal value.")
-			return
+			return fmt.Errorf("parse error: invalid decimal value")
 		}
 		decimal = tmp
 	}
@@ -49,6 +44,7 @@ func useCLI(target string) {
 	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("oct[8]  :"), color.CyanString(oct))
 	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("dec[10] :"), color.CyanString(dec))
 	fmt.Fprintf(color.Output, "%s %s\n", color.GreenString("hex[16] :"), color.CyanString(hex))
+	return nil
 }
 
 func toString(decimal int64) (bin, oct, dec, hex string) {

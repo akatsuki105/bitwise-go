@@ -62,10 +62,10 @@ func useTUI() {
 	for {
 		e := <-uiEvents
 		switch e.ID {
-		case "q", "<C-c>":
+		case "q", "<C-c>", "<Escape>":
 			return
 
-		case "<Tab>":
+		case "<Up>", "k", "<Down>", "j":
 			switch state.mode {
 			case mode32Bit:
 				state.mode = modeBinary
@@ -84,7 +84,7 @@ func useTUI() {
 			}
 			ui.Render(p0, p1)
 
-		case "<Left>":
+		case "<Left>", "h":
 			switch state.mode {
 			case mode32Bit:
 				state.cursor[0]++
@@ -102,7 +102,7 @@ func useTUI() {
 			}
 			ui.Render(p0, p1)
 
-		case "<Right>":
+		case "<Right>", "l":
 			switch state.mode {
 			case mode32Bit:
 				state.cursor[0]--
@@ -120,43 +120,20 @@ func useTUI() {
 			}
 			ui.Render(p0, p1)
 
-		case "<Up>":
+		case "<Space>":
 			switch state.mode {
 			case modeBinary:
 				bit := state.bits.buf[state.cursor[1]]
-				if bit == 0 {
-					bit = 1
+				bit = (bit + 1) % 2
+				state.bits.buf[state.cursor[1]] = bit
+				dec := state.bits.decimal()
 
-					state.bits.buf[state.cursor[1]] = bit
-					dec := state.bits.decimal()
-
-					state.oct = strconv.FormatInt(dec, 8)
-					state.dec = int(dec)
-					state.hex = strconv.FormatInt(dec, 16)
-					state.bits.update(dec, state.cursor[1])
-					p0.Text = getP0Text(&state)
-					p1.Text = getP1Text(&state)
-				}
-			}
-			ui.Render(p0, p1)
-
-		case "<Down>":
-			switch state.mode {
-			case modeBinary:
-				bit := state.bits.buf[state.cursor[1]]
-				if bit == 1 {
-					bit = 0
-
-					state.bits.buf[state.cursor[1]] = bit
-					dec := state.bits.decimal()
-
-					state.oct = strconv.FormatInt(dec, 8)
-					state.dec = int(dec)
-					state.hex = strconv.FormatInt(dec, 16)
-					state.bits.update(dec, state.cursor[1])
-					p0.Text = getP0Text(&state)
-					p1.Text = getP1Text(&state)
-				}
+				state.oct = strconv.FormatInt(dec, 8)
+				state.dec = int(dec)
+				state.hex = strconv.FormatInt(dec, 16)
+				state.bits.update(dec, state.cursor[1])
+				p0.Text = getP0Text(&state)
+				p1.Text = getP1Text(&state)
 			}
 			ui.Render(p0, p1)
 		}
