@@ -185,7 +185,50 @@ func useTUI() {
 				p1.Text = getP1Text(&state)
 				ui.Render(p0, p1)
 			case 1: // hex
+				dec := int64(state.dec)
+				switch e.ID {
+				case "0":
+					if state.dec > 0 {
+						dec *= 16
+					}
+				case "1", "2", "3", "4", "5", "6", "7", "8", "9":
+					num, _ := strconv.Atoi(e.ID)
+					dec = dec*16 + int64(num)
+				case "a", "b", "c", "d", "e", "f":
+					r := []rune(e.ID)
+					ascii := int(r[0])
+					num := ascii - 87
+					dec = dec*16 + int64(num)
+				case "<C-<Backspace>>":
+					dec /= 16
+				}
+				state.oct = strconv.FormatInt(dec, 8)
+				state.dec = int(dec)
+				state.hex = strconv.FormatInt(dec, 16)
+				state.bits.update(dec, -1)
+				p0.Text = getP0Text(&state)
+				p1.Text = getP1Text(&state)
+				ui.Render(p0, p1)
 			case 0: // oct
+				dec := int64(state.dec)
+				switch e.ID {
+				case "0":
+					if state.dec > 0 {
+						dec *= 8
+					}
+				case "1", "2", "3", "4", "5", "6", "7":
+					num, _ := strconv.Atoi(e.ID)
+					dec = dec*8 + int64(num)
+				case "<C-<Backspace>>":
+					dec /= 8
+				}
+				state.oct = strconv.FormatInt(dec, 8)
+				state.dec = int(dec)
+				state.hex = strconv.FormatInt(dec, 16)
+				state.bits.update(dec, -1)
+				p0.Text = getP0Text(&state)
+				p1.Text = getP1Text(&state)
+				ui.Render(p0, p1)
 			}
 		}
 	}
@@ -207,7 +250,7 @@ func getP0Text(state *TUIState) string {
 	} else {
 		footer += state.hex
 	}
-	for i := 0; i < 23-len(state.hex); i++ {
+	for i := 0; i < 22-len(state.hex); i++ {
 		footer += " "
 	}
 
