@@ -1,5 +1,7 @@
 # bitwise-go
 
+![Go](https://github.com/Akatsuki-py/bitwise-go/workflows/Go/badge.svg)
+
 ## Multi-platform terminal based bitwise calculator
 
 _bitwise-go_ is multi base interactive calculator supporting dynamic base conversion and bit manipulation.
