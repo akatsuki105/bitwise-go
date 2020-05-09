@@ -11,7 +11,6 @@ This repository is based on [_mellowcandle/bitwise_](https://github.com/mellowca
 
 Some of the features include:
 * Works on multi-platform such as Windows, OSX, Linux.
-* Command line calculator supporting all bitwise operations.
 * Individual bit manipulator.
 
 ![conversion](https://imgur.com/pcth8U0.png "Bitwise conversion")
