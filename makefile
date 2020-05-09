@@ -6,4 +6,4 @@ endif
 
 .PHONY: build
 build:
-	go build -o bitwise$(EXE_EXT) ./cmd/
+	go build -o bitwise$(EXE_EXT) -ldflags "-X main.version=$(shell git describe --tags)" ./cmd/

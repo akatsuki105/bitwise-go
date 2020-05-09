@@ -14,17 +14,19 @@ Some of the features include:
 * Command line calculator supporting all bitwise operations.
 * Individual bit manipulator.
 
-## Demo
+![conversion](https://imgur.com/pcth8U0.png "Bitwise conversion")
 
-TODO
+![interactive](https://imgur.com/QI9BrHl.png "Bitwise interactive")
 
 ## Install
 
 #### Download Binary
 
-TODO
+Please download binary from [Release page](https://github.com/Akatsuki-py/bitwise-go/releases).
 
 #### Build by yourself
+
+Requirement: Go and Make
 
 ```sh
 $ git clone https://github.com/Akatsuki-py/bitwise-go.git
@@ -40,15 +42,9 @@ In command line mode, bitwise will calculate the given expression and will outpu
 
 _bitwise-go_ detects the base by the preface of the input (_0x/0X_ for hexadecimal, leading _0_ for octal, _0b_ for binary, and the rest is decimal).
 
-### Examples:
-
-![conversion](https://imgur.com/pcth8U0.png "Bitwise conversion")
-
 ### Interactive mode
 _bitwise-go_ starts in interactive mode if no command line parameters are passed. In this mode, you can input a number and manipulate it and see the other bases change dynamically.
 It also allows changing individual bits in the binary.
-
-![interactive](https://imgur.com/QI9BrHl.png "Bitwise interactive")
 
 #### Navigation in interactive mode
 To move around use the arrow keys, or use _vi_ key bindings : <kbd> h </kbd> <kbd> j </kbd> <kbd> k </kbd> <kbd> l </kbd>.

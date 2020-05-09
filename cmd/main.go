@@ -6,6 +6,8 @@ import (
 	"os"
 )
 
+var version string
+
 const (
 	ExitCodeOK int = iota
 	ExitCodeError
@@ -46,7 +48,7 @@ func Run() int {
 }
 
 func useHelp() {
-	fmt.Println(`bitwise Help: `)
+	fmt.Println(`bitwise-go Help: `)
 	fmt.Println(`
 CLI: 
 $ bitwise 0b0100 // binary
@@ -59,6 +61,8 @@ $ bitwise`)
 }
 
 func useVersion() {
-	fmt.Print(`bitwise
-Version: v0.0.0`)
+	fmt.Printf(`bitwise-go
+	
+Version: %s
+Author: Akihiro Otomo`, version)
 }
