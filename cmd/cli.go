@@ -18,7 +18,7 @@ func useCLI(target string) error {
 			return fmt.Errorf("parse error: invalid hexdecimal value")
 		}
 		decimal = tmp
-	case strings.HasPrefix(target, "0b"):
+	case strings.HasPrefix(target, "0b") || strings.HasPrefix(target, "b") || strings.HasPrefix(target, "%"):
 		target = strings.Replace(target, "_", "", -1)
 		tmp, err := strconv.ParseInt(target[2:], 2, 64)
 		if err != nil {

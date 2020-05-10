@@ -14,7 +14,7 @@ const (
 )
 
 const (
-	mode32Bit = iota
+	modeNumber = iota
 	modeBinary
 )
 
@@ -29,7 +29,7 @@ type TUIState struct {
 
 func useTUI() {
 	state := TUIState{
-		mode:   mode32Bit,
+		mode:   modeNumber,
 		cursor: [2]int{2, 31},
 		bits:   *newBitArray(-1),
 		dec:    0,
@@ -61,13 +61,14 @@ func useTUI() {
 	uiEvents := ui.PollEvents()
 	for {
 		e := <-uiEvents
+		// common
 		switch e.ID {
 		case "q", "<C-c>", "<Escape>":
 			return
 
 		case "<Up>", "k", "<Down>", "j":
 			switch state.mode {
-			case mode32Bit:
+			case modeNumber:
 				state.mode = modeBinary
 				p0.BorderStyle.Fg = ui.ColorWhite
 				p1.BorderStyle.Fg = ui.ColorBlue
@@ -75,7 +76,7 @@ func useTUI() {
 				p0.Text = getP0Text(&state)
 				p1.Text = getP1Text(&state)
 			case modeBinary:
-				state.mode = mode32Bit
+				state.mode = modeNumber
 				p0.BorderStyle.Fg = ui.ColorBlue
 				p1.BorderStyle.Fg = ui.ColorWhite
 				state.bits.update(int64(state.dec), -1)
@@ -86,7 +87,7 @@ func useTUI() {
 
 		case "<Left>", "h":
 			switch state.mode {
-			case mode32Bit:
+			case modeNumber:
 				state.cursor[0]++
 				if state.cursor[0] > 2 {
 					state.cursor[0] = 0
@@ -104,7 +105,7 @@ func useTUI() {
 
 		case "<Right>", "l":
 			switch state.mode {
-			case mode32Bit:
+			case modeNumber:
 				state.cursor[0]--
 				if state.cursor[0] < 0 {
 					state.cursor[0] = 2
@@ -120,25 +121,44 @@ func useTUI() {
 			}
 			ui.Render(p0, p1)
 
-		case "<Space>":
-			switch state.mode {
-			case modeBinary:
-				bit := state.bits.buf[state.cursor[1]]
-				bit = (bit + 1) % 2
-				state.bits.buf[state.cursor[1]] = bit
-				dec := state.bits.decimal()
+		case "~":
+			dec32 := ^uint32(state.dec)
+			dec := int64(dec32)
 
-				state.oct = strconv.FormatInt(dec, 8)
-				state.dec = int(dec)
-				state.hex = strconv.FormatInt(dec, 16)
-				state.bits.update(dec, state.cursor[1])
-				p0.Text = getP0Text(&state)
-				p1.Text = getP1Text(&state)
-			}
+			state.oct = strconv.FormatInt(dec, 8)
+			state.dec = int(dec)
+			state.hex = strconv.FormatInt(dec, 16)
+			state.bits.update(dec, state.cursor[1])
+			p0.Text = getP0Text(&state)
+			p1.Text = getP1Text(&state)
+			ui.Render(p0, p1)
+		case "<":
+			dec32 := uint32(state.dec) * 2
+			dec := int64(dec32)
+
+			state.oct = strconv.FormatInt(dec, 8)
+			state.dec = int(dec)
+			state.hex = strconv.FormatInt(dec, 16)
+			state.bits.update(dec, state.cursor[1])
+			p0.Text = getP0Text(&state)
+			p1.Text = getP1Text(&state)
+			ui.Render(p0, p1)
+		case ">":
+			dec32 := uint32(state.dec) / 2
+			dec := int64(dec32)
+
+			state.oct = strconv.FormatInt(dec, 8)
+			state.dec = int(dec)
+			state.hex = strconv.FormatInt(dec, 16)
+			state.bits.update(dec, state.cursor[1])
+			p0.Text = getP0Text(&state)
+			p1.Text = getP1Text(&state)
 			ui.Render(p0, p1)
 		}
 
-		if state.mode == mode32Bit {
+		// mode specific
+		switch state.mode {
+		case modeNumber:
 			state.count++
 			switch state.cursor[0] {
 			case 2: // dec
@@ -207,6 +227,38 @@ func useTUI() {
 				p1.Text = getP1Text(&state)
 				ui.Render(p0, p1)
 			}
+		case modeBinary:
+			switch e.ID {
+			case "<Space>":
+				bit := state.bits.buf[state.cursor[1]]
+				bit = (bit + 1) % 2
+				state.bits.buf[state.cursor[1]] = bit
+				dec := state.bits.decimal()
+
+				state.oct = strconv.FormatInt(dec, 8)
+				state.dec = int(dec)
+				state.hex = strconv.FormatInt(dec, 16)
+				state.bits.update(dec, state.cursor[1])
+				p0.Text = getP0Text(&state)
+				p1.Text = getP1Text(&state)
+				ui.Render(p0, p1)
+			case "w":
+				state.cursor[1] = (state.cursor[1] - 8) - (state.cursor[1])%8 + 7
+				if state.cursor[1] < 0 {
+					state.cursor[1] += 32
+				}
+				state.bits.update(int64(state.dec), state.cursor[1])
+				p1.Text = getP1Text(&state)
+				ui.Render(p0, p1)
+			case "b":
+				state.cursor[1] = (state.cursor[1] + 8) - (state.cursor[1])%8 + 7
+				if state.cursor[1] > 31 {
+					state.cursor[1] -= 32
+				}
+				state.bits.update(int64(state.dec), state.cursor[1])
+				p1.Text = getP1Text(&state)
+				ui.Render(p0, p1)
+			}
 		}
 	}
 }
@@ -215,14 +267,14 @@ func getP0Text(state *TUIState) string {
 	header := "[Decimal:              Hexdecimal:           Octal:           ](fg:green)"
 	footer := fmt.Sprintf("%d", state.dec)
 	length := len(footer)
-	if state.mode == mode32Bit && state.cursor[0] == 2 {
+	if state.mode == modeNumber && state.cursor[0] == 2 {
 		footer = fmt.Sprintf("[%d](fg:blue)", state.dec)
 	}
 	for i := 0; i < 22-length; i++ {
 		footer += " "
 	}
 
-	if state.mode == mode32Bit && state.cursor[0] == 1 {
+	if state.mode == modeNumber && state.cursor[0] == 1 {
 		footer += fmt.Sprintf("[%s](fg:blue)", state.hex)
 	} else {
 		footer += state.hex
@@ -231,7 +283,7 @@ func getP0Text(state *TUIState) string {
 		footer += " "
 	}
 
-	if state.mode == mode32Bit && state.cursor[0] == 0 {
+	if state.mode == modeNumber && state.cursor[0] == 0 {
 		footer += fmt.Sprintf("[%s](fg:blue)", state.oct)
 	} else {
 		footer += state.oct
