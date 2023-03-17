@@ -13,6 +13,7 @@ func useCLI(target string) error {
 
 	switch {
 	case strings.HasPrefix(target, "0x"):
+		target = strings.Replace(target, "_", "", -1)
 		tmp, err := strconv.ParseInt(target[2:], 16, 64)
 		if err != nil {
 			return fmt.Errorf("parse error: invalid hexdecimal value")
@@ -26,12 +27,14 @@ func useCLI(target string) error {
 		}
 		decimal = tmp
 	case strings.HasPrefix(target, "0"):
+		target = strings.Replace(target, "_", "", -1)
 		tmp, err := strconv.ParseInt(target[1:], 8, 64)
 		if err != nil {
 			return fmt.Errorf("parse error: invalid octal value")
 		}
 		decimal = tmp
 	default:
+		target = strings.Replace(target, "_", "", -1)
 		tmp, err := strconv.ParseInt(target, 10, 64)
 		if err != nil {
 			return fmt.Errorf("parse error: invalid decimal value")
